@@ -8,18 +8,22 @@ public class GameController : MonoBehaviour
     [SerializeField] private GameObject GameContainer;
     [SerializeField] private Transform PlayersContainer;
     [SerializeField] private Transform CoinsContainer;
+    [SerializeField] Transform MissilesContainer;
 
     [SerializeField] private GameObject PlayerPrefab;
     [SerializeField] private GameObject CoinPrefab;
+    [SerializeField] GameObject MissilePrefab;
 
     private GameState State;
     private Dictionary<string, Transform> PlayersToRender;
     private Dictionary<string, Transform> CoinsToRender;
+    private Dictionary<string, Transform> MissilesToRender;
 
     private void Awake()
     {
         PlayersToRender = new Dictionary<string, Transform>();
         CoinsToRender = new Dictionary<string, Transform>();
+        MissilesToRender = new Dictionary<string, Transform>();
     }
 
     internal void StartGame(GameState state)
@@ -35,9 +39,32 @@ public class GameController : MonoBehaviour
         var Socket = NetworkController._Instance.Socket;
 
         InputController._Instance.onAxisChange += (axis) => { Socket.Emit("move", axis); };
+        InputController._Instance.onFireMissile += () =>
+        {
+            // Obtener la posición del primer jugador en la lista (puedes ajustarlo según tu lógica)
+            Vector2 playerPosition = state.Players.FirstOrDefault()?.Position ?? Vector2.zero;
+
+            string missileId = Guid.NewGuid().ToString();
+            // Lógica para spawnear un misil en la posición del jugador
+            SpawnMissile(missileId,playerPosition);
+        };
 
         State = state;
         Socket.On("updateState", UpdateState);
+    }
+
+    internal void SpawnMissile(string id, Vector2 position)
+    {
+        // Lógica para instanciar un nuevo misil en Unity
+        GameObject missileGameObject = Instantiate(MissilePrefab, MissilesContainer);
+        missileGameObject.transform.position = position;
+        missileGameObject.GetComponent<GameMissile>().Id = id;
+
+        // Agregar el misil al diccionario de misiles
+        MissilesToRender[id] = missileGameObject.transform;
+
+        // Enviar un mensaje al servidor para indicar que se ha disparado un nuevo misil
+        NetworkController._Instance.Socket.Emit("spawnMissile", new { Id = id, Position = position });
     }
 
     private void InstantiatePlayer(Player player)
@@ -47,6 +74,7 @@ public class GameController : MonoBehaviour
         playerGameObject.GetComponent<GamePlayer>().Id = player.Id;
         playerGameObject.GetComponent<GamePlayer>().Username = player.Username;
 
+        
         PlayersToRender[player.Id] = playerGameObject.transform;
     }
 
@@ -59,6 +87,11 @@ public class GameController : MonoBehaviour
     internal void NewPlayer(string id, string username)
     {
         InstantiatePlayer(new Player { Id = id, Username = username });
+    }
+    internal void FireMissile()
+    {
+        // Enviar un mensaje al servidor para indicar que se quiere disparar un misil
+        NetworkController._Instance.Socket.Emit("spawnMissile", "");
     }
     void Update()
     {

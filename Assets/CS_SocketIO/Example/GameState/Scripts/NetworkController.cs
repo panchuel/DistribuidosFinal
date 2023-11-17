@@ -46,6 +46,11 @@ public class NetworkController : MonoBehaviour
             JsonData jsonData = JsonUtility.FromJson<JsonData>(json);
             GameObject.Find("GameController").GetComponent<GameController>().NewPlayer(jsonData.Id,jsonData.Username);
         });
+        InputController._Instance.onFireMissile += () =>
+        {
+            // Lógica para enviar un mensaje al servidor cuando se dispara un misil
+            Socket.Emit("spawnMissile", "");
+        };
 
     }
 
@@ -72,6 +77,7 @@ public class JsonData
     public string Id;
     public string Message;
     public GameState State;
+    public Vector2 Position;
 }
 
 [Serializable]
@@ -89,6 +95,7 @@ public class Player
     public int x;
     public int y;
     public int Score;
+    public Vector2 Position;
 }
 
 [Serializable]

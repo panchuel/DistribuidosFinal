@@ -12,6 +12,8 @@ public class InputController : MonoBehaviour
     private static Axis axis = new Axis { Horizontal = 0, Vertical =0};
     Axis LastAxis = new Axis { Horizontal = 0, Vertical =0};
 
+    public event Action onFireMissile;
+
     void Start()
     {
         _Instance = this;
@@ -23,6 +25,11 @@ public class InputController : MonoBehaviour
     {
         var verticalInput = Input.GetAxis("Vertical");
         var horizontalInput = Input.GetAxis("Horizontal");
+        var fire = Input.GetButtonDown("Fire1");
+        if (fire)
+        {
+            FireMissile();
+        }
 
         axis.Vertical = Mathf.RoundToInt(verticalInput);
         axis.Horizontal = Mathf.RoundToInt(horizontalInput);
@@ -38,7 +45,11 @@ public class InputController : MonoBehaviour
             onAxisChange?.Invoke(axis);
         }
     }
- 
+
+    private void FireMissile()
+    {
+        onFireMissile?.Invoke();
+    }
 
     private bool AxisChange()
     {
@@ -50,6 +61,11 @@ public class Axis
 {
     public int Horizontal;
     public int Vertical;
+}
+
+public class Fire
+{
+    public int fireMissile;
 }
 
 
