@@ -1,34 +1,31 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
+using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject GameContainer;
-    [SerializeField]
-    private Transform PlayersContainer;
-    [SerializeField]
-    private Transform CoinsContainer;
+    [SerializeField] private GameObject GameContainer;
+    [SerializeField] private Transform PlayersContainer;
+    [SerializeField] private Transform CoinsContainer;
 
-    [SerializeField]
-    private GameObject PlayerPrefab;
-    [SerializeField]
-    private GameObject CoinPrefab;
+    [SerializeField] private GameObject PlayerPrefab;
+    [SerializeField] private GameObject CoinPrefab;
 
     private GameState State;
     private Dictionary<string, Transform> PlayersToRender;
     private Dictionary<string, Transform> CoinsToRender;
-    internal void StartGame(GameState state)
+
+    private void Awake()
     {
         PlayersToRender = new Dictionary<string, Transform>();
         CoinsToRender = new Dictionary<string, Transform>();
+    }
 
+    internal void StartGame(GameState state)
+    {
         GameObject.Find("PanelConnect").SetActive(false);
         GameContainer.SetActive(true);
-
 
         foreach (Player player in state.Players)
         {
@@ -41,8 +38,6 @@ public class GameController : MonoBehaviour
 
         State = state;
         Socket.On("updateState", UpdateState);
-
-        
     }
 
     private void InstantiatePlayer(Player player)
@@ -50,7 +45,7 @@ public class GameController : MonoBehaviour
         GameObject playerGameObject = Instantiate(PlayerPrefab, PlayersContainer);
         playerGameObject.transform.position = new Vector2(player.x, player.y);
         playerGameObject.GetComponent<GamePlayer>().Id = player.Id;
-        playerGameObject.GetComponent<GamePlayer>().Username = player.Id;
+        playerGameObject.GetComponent<GamePlayer>().Username = player.Username;
 
         PlayersToRender[player.Id] = playerGameObject.transform;
     }
@@ -59,14 +54,12 @@ public class GameController : MonoBehaviour
     {
         GameStateData jsonData = JsonUtility.FromJson<GameStateData>(json);
         State = jsonData.State;
-
     }
 
     internal void NewPlayer(string id, string username)
     {
         InstantiatePlayer(new Player { Id = id, Username = username });
     }
-
     void Update()
     {
         if (State != null)
@@ -118,10 +111,6 @@ public class GameController : MonoBehaviour
 
         CoinsToRender[coin.Id] = coinGameObject.transform;
     }
-
-
-
-
 }
 
 [Serializable]
